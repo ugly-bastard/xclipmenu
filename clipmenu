@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
-: "${CM_LAUNCHER=dmenu}"
+: "${CM_LAUNCHER=rofi}"
 : "${CM_HISTLENGTH=8}"
 
 shopt -s nullglob
 
 cache_dir=$(clipctl cache-dir)
+image_dir=$(clipctl image-dir)
 cache_file=$cache_dir/line_cache
 
 # Not -h, see #142
@@ -20,7 +21,7 @@ Environment variables:
 
 - $CM_DIR: specify the base directory to store the cache dir in (default: $XDG_RUNTIME_DIR, $TMPDIR, or /tmp)
 - $CM_HISTLENGTH: specify the number of lines to show in dmenu/rofi (default: 8)
-- $CM_LAUNCHER: specify a dmenu-compatible launcher (default: dmenu)
+- $CM_LAUNCHER: specify a dmenu-compatible launcher (default: rofi)
 - $CM_OUTPUT_CLIP: if set, output clip selection to stdout
 EOF
     exit 0
@@ -62,7 +63,15 @@ file=$cache_dir/$(cksum <<< "$chosen_line")
 [[ -f "$file" ]] || exit 2
 
 for selection in clipboard primary; do
-    xsel --logfile /dev/null -i --"$selection" < "$file"
+    if [[ $file == $image_dir/clip_*.png ]];then
+        if [[ -e $file ]];then
+            xclip -se "$selection" -t image/png -i < "$file"
+        else
+            xclip -se "$selection" -i < "$file"
+        fi
+    else
+        xclip --se "$selection" -i < "$file"
+    fi
 done
 
 if (( CM_OUTPUT_CLIP )); then

@@ -6,14 +6,15 @@
 : "${CM_SYNC_CLIPBOARD_TO_PRIMARY=0}"
 : "${CM_DEBUG=0}"
 
-: "${CM_MAX_CLIPS:=1000}"
+: "${CM_MAX_CLIPS:=100}"
 # Buffer to batch to avoid calling too much. Only used if CM_MAX_CLIPS >0.
 CM_MAX_CLIPS_THRESH=$(( CM_MAX_CLIPS + 10 ))
 
-: "${CM_SELECTIONS:=clipboard primary}"
+: "${CM_SELECTIONS:=clipboard}"
 read -r -a selections <<< "$CM_SELECTIONS"
 
 cache_dir=$(clipctl cache-dir)
+image_dir=$(clipctl image-dir)
 cache_file=$cache_dir/line_cache
 status_file=$cache_dir/status
 
@@ -24,7 +25,7 @@ session_lock_file=$cache_dir/session_lock
 lock_timeout=2
 has_xdotool=0
 
-_xsel() { timeout 1 xsel --logfile /dev/null "$@"; }
+_xclip() { timeout 1 xclip "$@"; }
 
 error() { printf 'ERROR: %s\n' "${1?}" >&2; }
 info() { printf 'INFO: %s\n' "${1?}"; }
@@ -76,7 +77,7 @@ sig_enable() {
     # Still store the last data so we don't end up eventually putting it in the
     # clipboard if it wasn't changed
     for selection in "${selections[@]}"; do
-        data=$(_xsel -o --"$selection"; printf x)
+        data=$(_xclip -o --se "$selection"; printf x)
         last_data_sel[$selection]=${data%x}
     done
 
@@ -126,6 +127,7 @@ fi
 # It's ok that this only applies to the final directory.
 # shellcheck disable=SC2174
 mkdir -p -m0700 "$cache_dir"
+mkdir -p "$image_dir"
 echo "enabled" > "$status_file"
 
 exec {session_lock_fd}> "$session_lock_file"
@@ -193,8 +195,13 @@ while true; do
     for selection in "${selections[@]}"; do
         updated_sel[$selection]=0
 
-        data=$(_xsel -o --"$selection"; printf x)
-        data=${data%x}  # avoid trailing newlines being stripped
+        if [[ $(_xclip -se c -t TARGETS -o | grep image) ]]; then
+            data=$(mktemp "$image_dir"/clip_XXXXXXXXXX --suffix=.png)
+            _xclip -se c -t image/png -o > "$data"
+        else
+            data=$(_xclip -o --se "$selection"; printf x)
+            data=${data%x}  # avoid trailing newlines being stripped
+        fi
 
         [[ $data == *[^[:space:]]* ]] || continue
         [[ $last_data == "$data" ]] && continue
@@ -226,15 +233,15 @@ while true; do
 
         if (( CM_OWN_CLIPBOARD )) && [[ $selection == clipboard ]]; then
             # Only clipboard, since apps like urxvt will unhilight for PRIMARY
-            _xsel -o --clipboard | _xsel -i --clipboard
+            _xclip -o --se clipboard | _xclip -i --se clipboard
         fi
     done
 
     if (( CM_SYNC_PRIMARY_TO_CLIPBOARD )) && (( updated_sel[primary] )); then
-        _xsel -o --primary | _xsel -i --clipboard
+        _xclip -o --se primary | _xclip -i --se clipboard
     fi
     if (( CM_SYNC_CLIPBOARD_TO_PRIMARY )) && (( updated_sel[clipboard] )); then
-        _xsel -o --clipboard | _xsel -i --primary
+        _xclip -o --se clipboard | _xclip -i --se primary
     fi
 
     # The cache file may not exist if this is the first run and data is skipped

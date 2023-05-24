@@ -13,6 +13,7 @@ Commands:
     toggle: toggles clip collection
     version: returns major version
     cache-dir: returns the directory used for caching
+    image-dir: returns the directory used for storing copied images
 EOF
     exit 0
 fi
@@ -30,6 +31,7 @@ esac
 
 major_version=6
 cache_dir=$CM_DIR/clipmenu.$major_version.$USER
+image_dir="/tmp/clipmenu"
 status_file=$cache_dir/status
 
 case $1 in
@@ -45,6 +47,7 @@ case $1 in
     ;;
     version) echo "$major_version" ;;
     cache-dir) echo "$cache_dir" ;;
+    image-dir) echo "$image_dir" ;;
     *)
         printf 'Unknown command: %s\n' "$1" >&2
         exit 1
