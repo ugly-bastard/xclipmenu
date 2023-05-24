@@ -71,7 +71,7 @@ for selection in clipboard primary; do
             xclip -se "$selection" -i < "$file"
         fi
     else
-        xclip --se "$selection" -i < "$file"
+        xclip -se "$selection" -i < "$file"
     fi
 done
 
