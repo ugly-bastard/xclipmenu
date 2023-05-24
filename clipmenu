@@ -63,9 +63,10 @@ file=$cache_dir/$(cksum <<< "$chosen_line")
 [[ -f "$file" ]] || exit 2
 
 for selection in clipboard primary; do
-    if [[ $file == $image_dir/clip_*.png ]];then
-        if [[ -e $file ]];then
-            xclip -se "$selection" -t image/png -i < "$file"
+    content=$(cat "$file")
+    if [[ "$content" == $image_dir/clip_*.png ]];then
+        if [[ -e "$content" ]];then
+            xclip -se "$selection" -t image/png -i < "$content"
         else
             xclip -se "$selection" -i < "$file"
         fi
