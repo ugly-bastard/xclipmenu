@@ -40,7 +40,7 @@ fi
 
 # rofi supports dmenu-like arguments through the -dmenu flag. -p wastes space
 # in real dmenu, but rofi shows "dmenu:" anyway, so pass it here only.
-[[ "$CM_LAUNCHER" == rofi ]] && set -- -dmenu -p clipmenu "$@"
+#[[ "$CM_LAUNCHER" == rofi ]] && set -- -dmenu -p clipmenu "$@"
 
 list_clips() {
     LC_ALL=C sort -rnk 1 < "$cache_file" | cut -d' ' -f2- | awk '!seen[$0]++'
@@ -53,6 +53,9 @@ if [[ "$CM_LAUNCHER" == rofi-script ]]; then
         list_clips
         exit
     fi
+elif [[ "$CM_LAUNCHER" == rofi ]];then
+    chosen_line=$(list_clips | while read A ; do echo -en "$A\x00icon\x1f$A\n"; done | "$CM_LAUNCHER" -dmenu -p clipmenu "${launcher_args[@]}")
+    launcher_exit=$?
 else
     chosen_line=$(list_clips | "$CM_LAUNCHER" "${launcher_args[@]}" "$@")
     launcher_exit=$?
@@ -64,12 +67,8 @@ file=$cache_dir/$(cksum <<< "$chosen_line")
 
 for selection in clipboard primary; do
     content=$(cat "$file")
-    if [[ "$content" == $image_dir/clip_*.png ]];then
-        if [[ -e "$content" ]];then
-            xclip -se "$selection" -t image/png -i < "$content"
-        else
-            xclip -se "$selection" -i < "$file"
-        fi
+    if [[ "$content" == $image_dir/clip_*.png ]] && [[ -e "$content" ]];then
+        xclip -se "$selection" -t image/png -i < "$content"
     else
         xclip -se "$selection" -i < "$file"
     fi
