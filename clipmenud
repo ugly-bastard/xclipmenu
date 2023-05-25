@@ -77,7 +77,7 @@ sig_enable() {
     # Still store the last data so we don't end up eventually putting it in the
     # clipboard if it wasn't changed
     for selection in "${selections[@]}"; do
-        data=$(_xclip -o --se "$selection"; printf x)
+        data=$(_xclip -o -se "$selection"; printf x)
         last_data_sel[$selection]=${data%x}
     done
 
@@ -199,7 +199,7 @@ while true; do
             data=$(mktemp "$image_dir"/clip_XXXXXXXXXX --suffix=.png)
             _xclip -se c -t image/png -o > "$data"
         else
-            data=$(_xclip -o --se "$selection"; printf x)
+            data=$(_xclip -o -se "$selection"; printf x)
             data=${data%x}  # avoid trailing newlines being stripped
         fi
 
@@ -233,15 +233,15 @@ while true; do
 
         if (( CM_OWN_CLIPBOARD )) && [[ $selection == clipboard ]]; then
             # Only clipboard, since apps like urxvt will unhilight for PRIMARY
-            _xclip -o --se clipboard | _xclip -i --se clipboard
+            _xclip -o -se clipboard | _xclip -i -se clipboard
         fi
     done
 
     if (( CM_SYNC_PRIMARY_TO_CLIPBOARD )) && (( updated_sel[primary] )); then
-        _xclip -o --se primary | _xclip -i --se clipboard
+        _xclip -o -se primary | _xclip -i -se clipboard
     fi
     if (( CM_SYNC_CLIPBOARD_TO_PRIMARY )) && (( updated_sel[clipboard] )); then
-        _xclip -o --se clipboard | _xclip -i --se primary
+        _xclip -o -se clipboard | _xclip -i -se primary
     fi
 
     # The cache file may not exist if this is the first run and data is skipped
