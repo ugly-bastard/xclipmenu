@@ -207,6 +207,13 @@ while true; do
         [[ $last_data == "$data" ]] && continue
         [[ ${last_data_sel[$selection]} == "$data" ]] && continue
 
+        for image_del in $image_dir/*.png; do
+            if [[ "$data" != "$image_del" ]] && [[ ! $(compare -metric AE "$data" "$image_del" null) ]];then
+                clipdel -d $image_del
+                rm -f $image_del
+            fi
+        done
+
         if [[ $last_data && $data == "$last_data"* ]] ||
            [[ $last_data && $data == *"$last_data" ]]; then
             # Don't actually remove the file yet, because it might be

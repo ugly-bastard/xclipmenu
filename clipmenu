@@ -54,7 +54,7 @@ if [[ "$CM_LAUNCHER" == rofi-script ]]; then
         exit
     fi
 elif [[ "$CM_LAUNCHER" == rofi ]];then
-    chosen_line=$(list_clips | while read A ; do echo -en "$A\x00icon\x1f$A\n"; done | "$CM_LAUNCHER" -dmenu -p clipmenu "${launcher_args[@]}")
+    chosen_line=$(list_clips | while read A ; do if [[ "$A" == $image_dir/clip_*.png ]] && [[ -e "$A" ]];then echo -en "$A\x00icon\x1f$A\n"; else echo "$A"; fi; done | "$CM_LAUNCHER" -dmenu -p clipmenu "${launcher_args[@]}")
     launcher_exit=$?
 else
     chosen_line=$(list_clips | "$CM_LAUNCHER" "${launcher_args[@]}" "$@")
