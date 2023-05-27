@@ -195,9 +195,18 @@ while true; do
     for selection in "${selections[@]}"; do
         updated_sel[$selection]=0
 
-        if [[ $(_xclip -se c -t TARGETS -o | grep image) ]]; then
+        if [[ $(_xclip -se $selection -t TARGETS -o | grep image) ]]; then
             data=$(mktemp "$image_dir"/clip_XXXXXXXXXX --suffix=.png)
-            _xclip -se c -t image/png -o > "$data"
+            _xclip -se $selection -t image/png -o > "$data"
+            for image_del in $image_dir/*.png; do
+                if [[ "$data" != "$image_del" ]];then
+                    if [[ "$((compare -metric AE "$data" "$image_del" null) 2>&1)" == "0" ]];then
+                        debug "Same image as $image_del"
+                        rm -f $data
+                        data=$image_del
+                    fi
+                fi
+            done
         else
             data=$(_xclip -o -se "$selection"; printf x)
             data=${data%x}  # avoid trailing newlines being stripped
@@ -206,13 +215,6 @@ while true; do
         [[ $data == *[^[:space:]]* ]] || continue
         [[ $last_data == "$data" ]] && continue
         [[ ${last_data_sel[$selection]} == "$data" ]] && continue
-
-        for image_del in $image_dir/*.png; do
-            if [[ "$data" != "$image_del" ]] && [[ ! $(compare -metric AE "$data" "$image_del" null) ]];then
-                clipdel -d $image_del
-                rm -f $image_del
-            fi
-        done
 
         if [[ $last_data && $data == "$last_data"* ]] ||
            [[ $last_data && $data == *"$last_data" ]]; then
