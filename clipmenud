@@ -200,7 +200,7 @@ while true; do
             _xclip -se $selection -t image/png -o > "$data"
             for image_del in $image_dir/*.png; do
                 if [[ "$data" != "$image_del" ]];then
-                    if [[ "$((compare -metric AE "$data" "$image_del" null) 2>&1)" == "0" ]];then
+                    if [[ "$((compare -metric AE "$data" "$image_del" NULL:) 2>&1)" == "0" ]];then
                         debug "Same image as $image_del"
                         rm -f $data
                         data=$image_del
